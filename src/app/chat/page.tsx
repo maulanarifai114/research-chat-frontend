@@ -48,8 +48,8 @@ export default function page() {
     <div className="container flex h-full flex-col gap-4 py-12">
       <div className="flex min-h-px grow flex-col gap-2 overflow-auto">
         {messages.map((item, index) => (
-          <p key={index}>
-            {item.sender} : {item.message}{" "}
+          <p className={`${item.sender === user?.fullName ? "ml-auto bg-blue-300" : ""} w-fit rounded bg-gray-200 px-4 py-2 text-black`} key={index}>
+            {item.sender} : {item.message}
           </p>
         ))}
       </div>
