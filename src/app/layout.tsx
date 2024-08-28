@@ -25,7 +25,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} h-full bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white`}>
         <div onClick={() => theme.toggleMode()} className="fixed right-4 top-4 cursor-pointer rounded bg-white px-2 py-2 text-xs text-gray-700 shadow dark:bg-gray-700 dark:text-white">
-          Toggle
+          Toggle Theme
         </div>
         {children}
       </body>
