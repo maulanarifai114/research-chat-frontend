@@ -8,11 +8,30 @@ import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import SideBarMenu from "@/component/chat/SidebarMenu";
 import SideBarChat from "@/component/chat/SidebarChat";
+import BubbleChat from "@/component/chat/BubbleChat";
 
 export default function page() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<{ sender: string; message: string }[]>([]);
   const [user, setUser] = useState<Auth | null>(null);
+  const [dummyChat, setDummyChat] = useState([
+    {
+      message: "hello",
+      sender: "1",
+      fullname: "john",
+    },
+    {
+      message: "hello",
+      sender: "1",
+      fullname: "john",
+    },
+    {
+      message: "hello",
+      sender: "1",
+      fullname: "tom",
+    },
+  ]);
+
   const router = useRouter();
   useEffect(() => {
     if (!localStorage.getItem("user")) router.push("/auth");
@@ -64,11 +83,12 @@ export default function page() {
               </div>
             </Avatar>
           </div>
-          <div className="flex min-h-px grow flex-col gap-2 overflow-auto">
-            {messages.map((item, index) => (
-              <p className={`${item.sender === user?.fullName ? "ml-auto bg-blue-300" : ""} w-fit rounded bg-gray-200 px-4 py-2 text-black`} key={index}>
-                {item.sender} : {item.message}
-              </p>
+          <div className="flex min-h-px w-full grow flex-col gap-4 overflow-auto">
+            {dummyChat.map((item, index) => (
+              // <p className={`${item.sender === user?.fullName ? "ml-auto bg-blue-300" : ""} w-fit rounded bg-gray-200 px-4 py-2 text-black`} key={index}>
+              //   {item.sender} : {item.message}
+              // </p>
+              <BubbleChat message={item.message} userName={item.fullname} key={index} />
             ))}
           </div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
