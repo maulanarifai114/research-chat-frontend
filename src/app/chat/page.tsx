@@ -9,9 +9,15 @@ import { io, Socket } from "socket.io-client";
 import SideBarMenu from "@/components/chat/SidebarMenu";
 import SideBarChat from "@/components/chat/SidebarChat";
 import BubbleChat from "@/components/chat/BubbleChat";
-import { MessageType } from "@/types/global";
+import { MessageType, Roles } from "@/types/global";
+import useHttp from "@/hooks/useHttp";
+import { profileState } from "@/state/profile.state";
+import { useRecoilState } from "recoil";
 
 export default function page() {
+  const http = useHttp();
+  const [chat, setChat] = useState([]);
+  const [profile, setProfile] = useRecoilState(profileState);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<{ sender: string; message: string }[]>([]);
   const [user, setUser] = useState<Auth | null>(null);
@@ -31,8 +37,28 @@ export default function page() {
     },
   ]);
 
+  const getMessage = async () => {
+    try {
+      const response = await http.get<any>("/v1/message/conversation/RLEG1QLR692DMOOQ1L3X");
+      setChat(response.data.message);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getProfile = async () => {
+    try {
+      const profileData = await http.get<any>("/v1/user/profile");
+      setProfile(profileData.data.profile);
+    } catch (error: any) {
+      console.log(error);
+    }
+  };
+
   const router = useRouter();
   useEffect(() => {
+    getMessage();
+    getProfile();
     if (!localStorage.getItem("user")) router.push("/auth");
     setUser(localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") as string) : null);
 
@@ -83,12 +109,10 @@ export default function page() {
             </Avatar>
           </div>
           <div className="flex min-h-px w-full grow flex-col gap-4 overflow-auto">
-            {dummyChat.map((item, index) => (
-              // <p className={`${item.sender === user?.fullName ? "ml-auto bg-blue-300" : ""} w-fit rounded bg-gray-200 px-4 py-2 text-black`} key={index}>
-              //   {item.sender} : {item.message}
-              // </p>
+            {/* {dummyChat.map((item, index) => (
               <BubbleChat {...item} key={index} />
-            ))}
+            ))} */}
+            {chat && profile && chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.role === profile.role ? MessageType.SENDER : MessageType.RECEIVER} key={index} />)}
           </div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
             <p>{user?.name} </p>
