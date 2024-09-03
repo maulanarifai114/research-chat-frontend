@@ -16,3 +16,8 @@ export enum Roles {
   MEMBER = "MEMBER",
   MENTOR = "MENTOR",
 }
+
+export enum MessageType {
+  SENDER = "SENDER",
+  RECEIVER = "RECEIVER",
+}

@@ -9,6 +9,7 @@ import { io, Socket } from "socket.io-client";
 import SideBarMenu from "@/components/chat/SidebarMenu";
 import SideBarChat from "@/components/chat/SidebarChat";
 import BubbleChat from "@/components/chat/BubbleChat";
+import { MessageType } from "@/types/global";
 
 export default function page() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -17,18 +18,16 @@ export default function page() {
   const [dummyChat, setDummyChat] = useState([
     {
       message: "hello",
-      sender: "1",
-      fullname: "john",
+      userName: "john",
     },
     {
       message: "hello",
-      sender: "1",
-      fullname: "john",
+      userName: "john",
+      type: MessageType.SENDER,
     },
     {
       message: "hello",
-      sender: "1",
-      fullname: "tom",
+      userName: "tom",
     },
   ]);
 
@@ -88,7 +87,7 @@ export default function page() {
               // <p className={`${item.sender === user?.fullName ? "ml-auto bg-blue-300" : ""} w-fit rounded bg-gray-200 px-4 py-2 text-black`} key={index}>
               //   {item.sender} : {item.message}
               // </p>
-              <BubbleChat message={item.message} userName={item.fullname} key={index} />
+              <BubbleChat {...item} key={index} />
             ))}
           </div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
