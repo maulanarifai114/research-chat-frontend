@@ -1,7 +1,8 @@
 export interface Auth {
   id?: string;
-  username: string;
-  fullName: string;
+  name: string;
+  email: string;
+  role: string;
 }
 
 export const getAuth = (): Auth | null => {

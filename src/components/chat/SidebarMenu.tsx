@@ -1,9 +1,16 @@
 "use client";
 
+import { clearAuth } from "@/utils/clear-auth";
 import { Sidebar } from "flowbite-react";
-import { HiChartPie, HiInbox, HiUser, HiBookOpen } from "react-icons/hi";
+import { useRouter } from "next/router";
+import { HiChartPie, HiInbox, HiBookOpen } from "react-icons/hi";
+import { RiLogoutCircleRLine } from "react-icons/ri";
 
 const SidebarMenu = () => {
+  const handleLogout = () => {
+    clearAuth();
+    window.location.href = "/auth";
+  };
   return (
     <Sidebar aria-label="Default sidebar example" className="w-full">
       <Sidebar.Items>
@@ -20,8 +27,8 @@ const SidebarMenu = () => {
           <Sidebar.Item href="#" icon={HiInbox}>
             Chat
           </Sidebar.Item>
-          <Sidebar.Item href="#" icon={HiUser}>
-            Users
+          <Sidebar.Item as="button" icon={RiLogoutCircleRLine} onClick={handleLogout}>
+            Logout
           </Sidebar.Item>
         </Sidebar.ItemGroup>
       </Sidebar.Items>

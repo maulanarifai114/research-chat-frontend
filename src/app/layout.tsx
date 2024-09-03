@@ -2,12 +2,15 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
+import { RecoilContextProvider } from "@/contexts/RecoilContext";
 
 import { ThemeModeScript, useThemeMode } from "flowbite-react";
 import { useEffect } from "react";
+import { SnackbarProvider } from "@/contexts/SnackbarContext";
+import { LoadingPageProvider } from "@/contexts/LoadingPageContext";
+import { LoadingBarProvider } from "@/contexts/LoadingBarContext";
 
+const inter = Inter({ subsets: ["latin"] });
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,10 +27,18 @@ export default function RootLayout({
         <ThemeModeScript />
       </head>
       <body className={`${inter.className} h-full bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white`}>
-        <div onClick={() => theme.toggleMode()} className="fixed right-4 top-4 cursor-pointer rounded bg-white px-2 py-2 text-xs text-gray-700 shadow dark:bg-gray-700 dark:text-white">
-          Toggle Theme
-        </div>
-        {children}
+        <RecoilContextProvider>
+          <SnackbarProvider>
+            <LoadingPageProvider>
+              <LoadingBarProvider>
+                <div onClick={() => theme.toggleMode()} className="fixed right-4 top-4 cursor-pointer rounded bg-white px-2 py-2 text-xs text-gray-700 shadow dark:bg-gray-700 dark:text-white">
+                  Toggle Theme
+                </div>
+                {children}
+              </LoadingBarProvider>
+            </LoadingPageProvider>
+          </SnackbarProvider>
+        </RecoilContextProvider>
       </body>
     </html>
   );

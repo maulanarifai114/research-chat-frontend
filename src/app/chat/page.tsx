@@ -6,9 +6,9 @@ import { Button, TextInput, Avatar } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import SideBarMenu from "@/component/chat/SidebarMenu";
-import SideBarChat from "@/component/chat/SidebarChat";
-import BubbleChat from "@/component/chat/BubbleChat";
+import SideBarMenu from "@/components/chat/SidebarMenu";
+import SideBarChat from "@/components/chat/SidebarChat";
+import BubbleChat from "@/components/chat/BubbleChat";
 
 export default function page() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -56,7 +56,7 @@ export default function page() {
     const message = formData.get("message");
     if (message) {
       event.currentTarget.reset();
-      socket?.emit("message", { sender: user?.fullName, message: message as string });
+      socket?.emit("message", { sender: user?.name, message: message as string });
     }
   };
 
@@ -92,7 +92,7 @@ export default function page() {
             ))}
           </div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
-            <p>{user?.fullName} </p>
+            <p>{user?.name} </p>
             <div className="flex gap-2">
               <TextInput name="message" className="w-full" />
               <Button color="blue" type="submit">
