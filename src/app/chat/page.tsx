@@ -18,7 +18,7 @@ export default function page() {
   const [chat, setChat] = useState<any[]>([]);
   const [profile, setProfile] = useRecoilState(profileState);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [receive, setReceive] = useState<any>(null);
+  const [currentMenu, setCurrentMenu] = useState<string>("private");
 
   const [formChat, setFormChat] = useState({
     message: "",
@@ -45,24 +45,11 @@ export default function page() {
     }
   };
 
-  const getMember = async () => {
-    try {
-      const response = await http.get<any>("/v1/member/conversation/RLEG1QLR692DMOOQ1L3X");
-      const receiver = response.data.member.filter((user: any) => user.id !== profile?.id);
-      if (receiver) {
-        setReceive(receive[0]);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     const payload = {
       sender: profile?.id,
-      receive: receive?.id,
       message: formChat.message,
       attachment: "[]",
       idConversation: formChat.idConversation,
@@ -81,7 +68,6 @@ export default function page() {
 
   useEffect(() => {
     if (profile && profile.id) {
-      getMember();
       setFormChat((prevData) => ({
         ...prevData,
         idUser: profile.id ?? "",
@@ -112,16 +98,16 @@ export default function page() {
   }, [profile]);
 
   return (
-    <div className="flex h-full gap-4 p-8">
-      <div className="h-screen w-2/12 border border-solid border-black">
+    <div className="flex h-screen gap-4 p-8">
+      {/* <div className="hidden h-screen w-2/12 border border-solid border-black md:flex">
         <SideBarMenu />
-      </div>
-      <div className="flex h-screen w-10/12 items-center border border-solid border-black bg-gray-200">
-        <div className="h-full w-1/3 border border-solid border-black">
-          <SideBarChat />
+      </div> */}
+      <div className="flex w-full items-center">
+        <div className="hidden h-full w-1/3 md:flex">
+          <SideBarChat onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} />
         </div>
         <div className="container flex h-full flex-col gap-4 py-8">
-          <div className="flex border border-solid border-black p-2">
+          <div className="flex p-2">
             <Avatar img="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" rounded>
               <div className="space-y-1 font-medium dark:text-white">
                 <div>Jese Leos</div>
@@ -129,7 +115,7 @@ export default function page() {
               </div>
             </Avatar>
           </div>
-          <div className="flex min-h-px w-full grow flex-col gap-4 overflow-auto">{chat && profile && chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.role === profile.role ? MessageType.SENDER : MessageType.RECEIVER} key={index} />)}</div>
+          <div className="scrollbar flex min-h-px w-full grow flex-col gap-4 overflow-y-scroll">{chat && profile && chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.role === profile.role ? MessageType.SENDER : MessageType.RECEIVER} key={index} />)}</div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
             <p>{profile && profile.name} </p>
             <div className="flex gap-2">

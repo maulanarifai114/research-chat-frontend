@@ -8,11 +8,11 @@ interface BubbleChatProps {
 }
 const BubbleChat = (props: BubbleChatProps) => {
   const isSender = props.type ? props.type === MessageType.SENDER : false;
-  const bubbleClass = isSender ? "bg-blue-100 dark:bg-blue-700" : "bg-gray-100 dark:bg-gray-700";
+  const bubbleClass = isSender ? "bg-blue-100 dark:bg-blue-700" : "bg-gray-200 dark:bg-gray-700";
   const alignmentClass = isSender ? "justify-end" : "justify-start";
   const textAlignment = isSender ? "text-right" : "text-left";
   return (
-    <div className={`flex w-full gap-4 ${alignmentClass}`}>
+    <div className={`flex w-full gap-4 pr-4 ${alignmentClass}`}>
       {!isSender && <img className="h-8 w-8 rounded-full" src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" alt={`${props.userName} avatar`} />}
       <div className={`leading-1.5 flex min-w-44 max-w-[320px] flex-col rounded-lg border-gray-200 p-4 ${bubbleClass} ${textAlignment}`}>
         <div className="flex items-center space-x-2 rtl:space-x-reverse">

@@ -1,3 +1,51 @@
+/* globals.css or any Tailwind CSS file */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide scrollbar arrows on Windows */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* globals.css */
+
+/* Custom Scrollbar for Light Mode */
+.scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c0c0c0 #f0f0f0;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background-color: #c0c0c0;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Custom Scrollbar for Dark Mode */
+.dark .scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #2d2d2d;
+}
+
+.dark .scrollbar::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.dark .scrollbar::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
