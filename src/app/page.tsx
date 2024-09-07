@@ -4,6 +4,7 @@ import { getAuth } from "@/utils/get-auth";
 import { Button } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import "flowbite";
 
 export default function Home() {
   const router = useRouter();
