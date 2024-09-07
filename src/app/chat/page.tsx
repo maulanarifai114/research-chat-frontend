@@ -19,17 +19,20 @@ export default function page() {
   const [profile, setProfile] = useRecoilState(profileState);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [currentMenu, setCurrentMenu] = useState<string>("private");
+  const [idConversation, setIdConversation] = useState<string>("");
+  const [member, setMember] = useState<any[]>([]);
+  const [receive, setReceive] = useState<any>(null);
 
   const [formChat, setFormChat] = useState({
     message: "",
     attachment: "",
-    idConversation: "RLEG1QLR692DMOOQ1L3X",
+    idConversation: "",
     idUser: "",
   });
 
   const getMessage = async () => {
     try {
-      const response = await http.get<any>("/v1/message/conversation/RLEG1QLR692DMOOQ1L3X");
+      const response = await http.get<any>(`/v1/message/conversation/${idConversation}`);
       setChat(response.data.message);
     } catch (error) {
       console.log(error);
@@ -45,6 +48,17 @@ export default function page() {
     }
   };
 
+  const getMember = async () => {
+    try {
+      const response = await http.get<any>(`/v1/member/user/${profile?.id}`);
+      if (response.data) {
+        setMember(response.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -52,7 +66,7 @@ export default function page() {
       sender: profile?.id,
       message: formChat.message,
       attachment: "[]",
-      idConversation: formChat.idConversation,
+      idConversation: idConversation,
     };
     socket?.emit("message", payload);
     setFormChat((prev) => ({
@@ -62,12 +76,19 @@ export default function page() {
   };
 
   useEffect(() => {
-    getMessage();
     getProfile();
   }, []);
 
   useEffect(() => {
+    if (idConversation) {
+      getMessage();
+    }
+  }, [idConversation]);
+
+  useEffect(() => {
     if (profile && profile.id) {
+      getMember();
+
       setFormChat((prevData) => ({
         ...prevData,
         idUser: profile.id ?? "",
@@ -98,24 +119,26 @@ export default function page() {
   }, [profile]);
 
   return (
-    <div className="flex h-screen gap-4 p-8">
+    <div className="flex h-screen max-h-screen items-center justify-center pl-4">
       {/* <div className="hidden h-screen w-2/12 border border-solid border-black md:flex">
         <SideBarMenu />
       </div> */}
-      <div className="flex w-full items-center">
-        <div className="hidden h-full w-1/3 md:flex">
-          <SideBarChat onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} />
+      <div className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-4">
+        <div className="hidden h-full md:flex">
+          <SideBarChat currentUser={receive && receive.id} receive={(data) => setReceive(data)} idConversation={(id) => setIdConversation(id)} onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} member={member && member} />
         </div>
-        <div className="container flex h-full flex-col gap-4 py-8">
-          <div className="flex p-2">
-            <Avatar img="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" rounded>
-              <div className="space-y-1 font-medium dark:text-white">
-                <div>Jese Leos</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Joined in August 2014</div>
-              </div>
-            </Avatar>
-          </div>
-          <div className="scrollbar flex min-h-px w-full grow flex-col gap-4 overflow-y-scroll">{chat && profile && chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.role === profile.role ? MessageType.SENDER : MessageType.RECEIVER} key={index} />)}</div>
+        <div className="container col-span-3 flex flex-col">
+          {receive ? (
+            <div className="flex p-2">
+              <Avatar img="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" rounded>
+                <div className="space-y-1 font-medium dark:text-white">
+                  <div>{receive.name}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Joined in August 2014</div>
+                </div>
+              </Avatar>
+            </div>
+          ) : null}
+          <div className="scrollbar flex max-h-[75vh] min-h-[75vh] w-full grow flex-col gap-4 overflow-auto">{chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.role === profile?.role ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}</div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
             <p>{profile && profile.name} </p>
             <div className="flex gap-2">
