@@ -21,7 +21,7 @@ const useHttp = () => {
         loadingBar.complete();
         return response;
       } catch (error: any) {
-        if (error.statusCode && error.statusCode === 401) router.push("/auth/login");
+        if (error.statusCode && error.statusCode === 401) router.push("/auth");
         setProfile(null);
         snackbar.start(error.message, "error");
         loadingBar.complete();

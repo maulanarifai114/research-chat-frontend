@@ -101,11 +101,14 @@ export default function page() {
       });
 
       newSocket.on("message", (newMessage) => {
+        console.log(newMessage);
+        console.log(profile);
         const newChat = {
           id: newMessage.Id,
           message: newMessage.Message,
           attachment: newMessage.Attachment,
           member: {
+            id: newMessage.member.id,
             email: newMessage.member.email,
             name: newMessage.member.name,
             role: newMessage.member.role,
@@ -138,7 +141,7 @@ export default function page() {
               </Avatar>
             </div>
           ) : null}
-          <div className="scrollbar flex max-h-[75vh] min-h-[75vh] w-full grow flex-col gap-4 overflow-auto">{chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.role === profile?.role ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}</div>
+          <div className="scrollbar flex max-h-[75vh] min-h-[75vh] w-full grow flex-col gap-4 overflow-auto">{chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.id === profile?.id ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}</div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
             <p>{profile && profile.name} </p>
             <div className="flex gap-2">

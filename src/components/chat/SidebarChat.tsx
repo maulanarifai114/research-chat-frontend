@@ -41,7 +41,7 @@ const SideBarChat = (props: { currentUser: string; currentMenu: string; onMenuCh
               users.map((user, index) => (
                 <Avatar
                   onClick={() => {
-                    props.idConversation(user.idConversation);
+                    props.idConversation(user.idConversation ? user.idConversation : user.id);
                     props.receive({ id: user.id, name: user.name, email: user.email, role: user.role });
                   }}
                   className={`justify-start rounded-md p-2 hover:bg-gray-300 dark:hover:bg-gray-900 ${props.currentUser === user.id ? "bg-gray-300 dark:bg-gray-900" : ""}`}
