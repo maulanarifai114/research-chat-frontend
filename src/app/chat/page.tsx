@@ -128,7 +128,7 @@ export default function page() {
       </div> */}
       <div className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-4">
         <div className="hidden h-full md:flex">
-          <SideBarChat currentUser={receive && receive.id} receive={(data) => setReceive(data)} idConversation={(id) => setIdConversation(id)} onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} member={member && member} />
+          <SideBarChat idUser={profile && profile.id} currentUser={receive && receive.id} receive={(data) => setReceive(data)} idConversation={(id) => setIdConversation(id)} onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} member={member && member} />
         </div>
         <div className="container col-span-3 flex flex-col">
           {receive ? (
