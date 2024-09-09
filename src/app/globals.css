@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+input[id^="react-select-"] {
+  @apply focus:border-transparent focus:outline-none focus:ring-0;
+}
+
 /* Hide scrollbar arrows on Windows */
 * {
   scrollbar-width: thin;
