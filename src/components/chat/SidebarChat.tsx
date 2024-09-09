@@ -21,6 +21,31 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
     }
   };
 
+  const addMember = async (idUser: string, idConversation: string) => {
+    try {
+      const data = {
+        id: "",
+        idUser: idUser,
+        idConversation: idConversation,
+      };
+      await http.post<any>(`/v1/member/save`, data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addConversation = async (props: { name?: string; type: string }) => {
+    try {
+      const data = {
+        name: props.name ? props.name : props.type.toLowerCase(),
+        type: props.type,
+      };
+      return await http.post<any>(`/v1/conversation/save`, data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     if (props.idUser && openModal) {
       getMember();
@@ -29,13 +54,13 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
 
   useEffect(() => {
     if (props.member) {
-      if (props.currentMenu === "private") {
+      if (props.currentMenu === "PRIVATE") {
         setUsers(props.member.privateMember);
       }
-      if (props.currentMenu === "group") {
+      if (props.currentMenu === "GROUP") {
         setUsers(props.member.groupMember);
       }
-      if (props.currentMenu === "broadcast") {
+      if (props.currentMenu === "BROADCAST") {
         setUsers(props.member.broadcastMember);
       }
     }
@@ -97,7 +122,14 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
               {member &&
                 member.map((user, index) => (
                   <Avatar
-                    onClick={() => {
+                    onClick={async () => {
+                      const conv: any = await addConversation({ type: props.currentMenu });
+                      console.log(conv.data);
+                      if (conv.data && props.idUser) {
+                        await addMember(user.id, conv.data.id);
+                        await addMember(props.idUser, conv.data.id);
+                        props.idConversation(conv.data.id);
+                      }
                       props.receive({ id: user.id, name: user.name, email: user.email, role: user.role });
                       setOpenModal(false);
                     }}

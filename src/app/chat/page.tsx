@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, TextInput, Avatar } from "flowbite-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import SideBarMenu from "@/components/chat/SidebarMenu";
 import SideBarChat from "@/components/chat/SidebarChat";
@@ -15,10 +15,11 @@ const SOCKET_SERVER_URL = "http://localhost:4000";
 
 export default function page() {
   const http = useHttp();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const [chat, setChat] = useState<any[]>([]);
   const [profile, setProfile] = useRecoilState(profileState);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [currentMenu, setCurrentMenu] = useState<string>("private");
+  const [currentMenu, setCurrentMenu] = useState<string>("PRIVATE");
   const [idConversation, setIdConversation] = useState<string>("");
   const [member, setMember] = useState<any[]>([]);
   const [receive, setReceive] = useState<any>(null);
@@ -82,8 +83,16 @@ export default function page() {
   useEffect(() => {
     if (idConversation) {
       getMessage();
+    } else {
+      setChat([]);
     }
-  }, [idConversation]);
+  }, [idConversation, receive]);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chat]);
 
   useEffect(() => {
     if (profile && profile.id) {
@@ -114,12 +123,14 @@ export default function page() {
             role: newMessage.member.role,
           },
         };
-        setChat((prev) => [...prev, newChat]);
+        if (receive) {
+          setChat((prev) => [...prev, newChat]);
+        }
       });
 
       setSocket(newSocket);
     }
-  }, [profile]);
+  }, [profile, receive]);
 
   return (
     <div className="flex h-screen max-h-screen items-center justify-center pl-4">
@@ -141,12 +152,14 @@ export default function page() {
               </Avatar>
             </div>
           ) : null}
-          <div className="scrollbar flex max-h-[75vh] min-h-[75vh] w-full grow flex-col gap-4 overflow-auto">{chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.id === profile?.id ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}</div>
+          <div ref={chatContainerRef} className="scrollbar flex max-h-[75vh] min-h-[75vh] w-full grow flex-col gap-4 overflow-auto">
+            {chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.id === profile?.id ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}
+          </div>
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
             <p>{profile && profile.name} </p>
             <div className="flex gap-2">
               <TextInput value={formChat.message} name="message" className="w-full" onChange={(e) => setFormChat((prev) => ({ ...prev, message: e.target.value }))} />
-              <Button color="blue" type="submit">
+              <Button disabled={receive ? false : true} color="blue" type="submit">
                 Send
               </Button>
             </div>
