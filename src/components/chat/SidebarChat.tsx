@@ -219,57 +219,61 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
         </button>
         <Modal dismissible show={openModal} onClose={() => setOpenModal(false)} style={{ zIndex: 10 }} className="z-10">
           <form onSubmit={handleCreateGroup}>
-            <Modal.Header>Group</Modal.Header>
+            <Modal.Header>{props.currentMenu === "PRIVATE" ? "Kontak" : "Group"}</Modal.Header>
             <Modal.Body>
-              <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    Name Group
-                  </label>
-                  <input onChange={(e) => setNameConversation(e.target.value)} type="text" id="name" className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500" placeholder="lorem ipsum" required />
+              {props.currentMenu === "GROUP" ? (
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                      Name Group
+                    </label>
+                    <input onChange={(e) => setNameConversation(e.target.value)} type="text" id="name" className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500" placeholder="lorem ipsum" required />
+                  </div>
+                  <div>
+                    <label htmlFor="member" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                      Member
+                    </label>
+                    <Select id="member" menuPortalTarget={document.body} styles={customStyles(isDarkMode)} closeMenuOnSelect={false} components={animatedComponents} isMulti options={optionMember} onChange={(e) => handleChangeSelect(e)} />
+                  </div>
+                  <div></div>
                 </div>
-                <div>
-                  <label htmlFor="member" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    Member
-                  </label>
-                  <Select id="member" menuPortalTarget={document.body} styles={customStyles(isDarkMode)} closeMenuOnSelect={false} components={animatedComponents} isMulti options={optionMember} onChange={(e) => handleChangeSelect(e)} />
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {member &&
+                    member.map((user, index) => (
+                      <Avatar
+                        onClick={async () => {
+                          const conv: any = await addConversation({ type: props.currentMenu });
+                          console.log(conv.data);
+                          if (conv.data && props.idUser) {
+                            await addMember(user.id, conv.data.id);
+                            await addMember(props.idUser, conv.data.id);
+                            props.idConversation(conv.data.id);
+                          }
+                          props.receive({ id: user.id, name: user.name, email: user.email, role: user.role });
+                          setOpenModal(false);
+                        }}
+                        className={`cursor-pointer justify-start rounded-md p-2 hover:bg-gray-300 dark:hover:bg-gray-900 ${props.currentUser === user.id ? "bg-gray-300 dark:bg-gray-900" : ""}`}
+                        key={index}
+                        img="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png"
+                        rounded
+                      >
+                        <div className="space-y-1 font-medium dark:text-white">
+                          <div>{user.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Joined in August 2014</div>
+                        </div>
+                      </Avatar>
+                    ))}
                 </div>
-                <div></div>
-              </div>
-
-              {/* <div className="flex flex-col gap-2">
-              {member &&
-                member.map((user, index) => (
-                  <Avatar
-                    onClick={async () => {
-                      const conv: any = await addConversation({ type: props.currentMenu });
-                      console.log(conv.data);
-                      if (conv.data && props.idUser) {
-                        await addMember(user.id, conv.data.id);
-                        await addMember(props.idUser, conv.data.id);
-                        props.idConversation(conv.data.id);
-                      }
-                      props.receive({ id: user.id, name: user.name, email: user.email, role: user.role });
-                      setOpenModal(false);
-                    }}
-                    className={`cursor-pointer justify-start rounded-md p-2 hover:bg-gray-300 dark:hover:bg-gray-900 ${props.currentUser === user.id ? "bg-gray-300 dark:bg-gray-900" : ""}`}
-                    key={index}
-                    img="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png"
-                    rounded
-                  >
-                    <div className="space-y-1 font-medium dark:text-white">
-                      <div>{user.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Joined in August 2014</div>
-                    </div>
-                  </Avatar>
-                ))}
-            </div> */}
+              )}
             </Modal.Body>
-            <Modal.Footer>
-              <div className="flex w-full items-center justify-end">
-                <Button type="submit">Submit</Button>
-              </div>
-            </Modal.Footer>
+            {props.currentMenu === "GROUP" ? (
+              <Modal.Footer>
+                <div className="flex w-full items-center justify-end">
+                  <Button type="submit">Submit</Button>
+                </div>
+              </Modal.Footer>
+            ) : null}
           </form>
         </Modal>
       </div>
