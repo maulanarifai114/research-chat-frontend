@@ -46,15 +46,23 @@ const customStyles = (isDarkMode: boolean) => ({
     color: isDarkMode ? "#ffffff" : "#000000",
   }),
   menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
+  input: (base: any) => ({
+    ...base,
+    color: isDarkMode ? "#ffffff" : "#000000",
+  }),
 });
 
-const SideBarChat = (props: { idUser?: string | null; currentUser: string; currentMenu: string; onMenuChange: (menu: string) => void; member: any; idConversation: (id: string) => void; receive: (data: any) => void }) => {
+const SideBarChat = (props: { idUser?: string | null; currentUser: string; currentMenu: string; onMenuChange: (menu: string) => void; member: any; idConversation: (id: string) => void; receive: (data: any) => void; isUpdated: (data: boolean) => void }) => {
   const theme = useThemeMode();
   const http = useHttp();
   const [users, setUsers] = useState<any[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [member, setMember] = useState<any[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [memberByRole, setMemberByRole] = useState<any[]>([]);
+  const [optionMember, setOptionMember] = useState<any[]>([]);
+  const [idsUser, setIdsUser] = useState<any[]>([]);
+  const [nameConversation, setNameConversation] = useState<string>("");
 
   useEffect(() => {
     setIsDarkMode(document.documentElement.classList.contains("dark"));
@@ -66,6 +74,36 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
       setMember(response.data);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const getUserByRole = async () => {
+    try {
+      const response = await http.get<any>(`/v1/member/list/user?roles=MEMBER`);
+      if (response.data) {
+        setMemberByRole(response.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleCreateGroup = async (e: any) => {
+    e.preventDefault();
+    try {
+      setOpenModal(false);
+      const responseCreate = await addConversation({ name: nameConversation, type: "GROUP" });
+      if (responseCreate?.data) {
+        const dataBulk = {
+          idConversation: responseCreate.data.id,
+          idUsers: [...idsUser, props.idUser],
+        };
+        await http.post<any>(`/v1/member/bulk`, dataBulk);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      props.isUpdated(true);
     }
   };
 
@@ -94,9 +132,25 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
     }
   };
 
+  const handleChangeSelect = (selected: any) => {
+    const ids = selected.map((user: any) => user.value);
+    setIdsUser(ids);
+  };
+
+  useEffect(() => {
+    if (memberByRole) {
+      const options = memberByRole.map((member) => ({
+        value: member.Id,
+        label: member.Name,
+      }));
+      setOptionMember(options);
+    }
+  }, [memberByRole]);
+
   useEffect(() => {
     if (props.idUser && openModal) {
       getMember();
+      getUserByRole();
     }
   }, [openModal, props.idUser]);
 
@@ -164,26 +218,26 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
           <FaPlus />
         </button>
         <Modal dismissible show={openModal} onClose={() => setOpenModal(false)} style={{ zIndex: 10 }} className="z-10">
-          <Modal.Header>Group</Modal.Header>
-          <Modal.Body>
-            <form>
+          <form onSubmit={handleCreateGroup}>
+            <Modal.Header>Group</Modal.Header>
+            <Modal.Body>
               <div className="grid grid-cols-1 gap-3">
                 <div>
                   <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                     Name Group
                   </label>
-                  <input type="text" id="name" className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500" placeholder="lorem ipsum" required />
+                  <input onChange={(e) => setNameConversation(e.target.value)} type="text" id="name" className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500" placeholder="lorem ipsum" required />
                 </div>
                 <div>
                   <label htmlFor="member" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                     Member
                   </label>
-                  <Select id="member" menuPortalTarget={document.body} styles={customStyles(isDarkMode)} closeMenuOnSelect={false} components={animatedComponents} defaultValue={[colourOptions[4], colourOptions[5]]} isMulti options={colourOptions} />
+                  <Select id="member" menuPortalTarget={document.body} styles={customStyles(isDarkMode)} closeMenuOnSelect={false} components={animatedComponents} isMulti options={optionMember} onChange={(e) => handleChangeSelect(e)} />
                 </div>
                 <div></div>
               </div>
-            </form>
-            {/* <div className="flex flex-col gap-2">
+
+              {/* <div className="flex flex-col gap-2">
               {member &&
                 member.map((user, index) => (
                   <Avatar
@@ -210,7 +264,13 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
                   </Avatar>
                 ))}
             </div> */}
-          </Modal.Body>
+            </Modal.Body>
+            <Modal.Footer>
+              <div className="flex w-full items-center justify-end">
+                <Button type="submit">Submit</Button>
+              </div>
+            </Modal.Footer>
+          </form>
         </Modal>
       </div>
     </div>

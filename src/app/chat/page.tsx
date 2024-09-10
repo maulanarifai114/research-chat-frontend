@@ -23,6 +23,7 @@ export default function page() {
   const [idConversation, setIdConversation] = useState<string>("");
   const [member, setMember] = useState<any[]>([]);
   const [receive, setReceive] = useState<any>(null);
+  const [isUpdate, setIsUpdate] = useState<boolean>(false);
 
   const [formChat, setFormChat] = useState({
     message: "",
@@ -95,6 +96,12 @@ export default function page() {
   }, [chat]);
 
   useEffect(() => {
+    if (isUpdate) {
+      getMember().finally(() => setIsUpdate(false));
+    }
+  }, [isUpdate]);
+
+  useEffect(() => {
     if (profile && profile.id) {
       getMember();
 
@@ -139,7 +146,7 @@ export default function page() {
       </div> */}
       <div className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-4">
         <div className="hidden h-full md:flex">
-          <SideBarChat idUser={profile && profile.id} currentUser={receive && receive.id} receive={(data) => setReceive(data)} idConversation={(id) => setIdConversation(id)} onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} member={member && member} />
+          <SideBarChat isUpdated={(e) => setIsUpdate(e)} idUser={profile && profile.id} currentUser={receive && receive.id} receive={(data) => setReceive(data)} idConversation={(id) => setIdConversation(id)} onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} member={member && member} />
         </div>
         <div className="container col-span-3 flex flex-col">
           {receive ? (
