@@ -1,72 +1,40 @@
-import React, { use, useEffect, useState } from "react";
-import { Avatar, Button, Modal, useThemeMode } from "flowbite-react";
+import useHttp from "@/hooks/useHttp";
+import React, { useEffect, useState } from "react";
+
+import { TabsMenu } from "@/types/global";
+import SelectComponent from "../../base/Select";
+import { Avatar, Button, Modal } from "flowbite-react";
+
 import { IoMdPerson } from "react-icons/io";
 import { FaUserGroup } from "react-icons/fa6";
 import { FaTowerBroadcast } from "react-icons/fa6";
 import { FaPlus } from "react-icons/fa6";
-import useHttp from "@/hooks/useHttp";
-import Select from "react-select";
-import makeAnimated from "react-select/animated";
-import { colourOptions } from "@/data/data";
+import ModalBodyPrivate from "./ModalBodyPrivate";
+import ModalBodyGroup from "./ModalBodyGroup";
+import ModalBodyBroadcast from "./ModalBodyBroadcast";
 
-const animatedComponents = makeAnimated();
+interface SidebarChatProps {
+  idUser?: string | null;
+  currentUser: string | null | undefined;
+  currentMenu: string;
+  member: any;
+  isDarkMode: boolean;
+  onMenuChange: (menu: TabsMenu) => void;
+  idConversation: (id: string) => void;
+  receive: (data: any) => void;
+  isUpdated: (data: boolean) => void;
+}
 
-const customStyles = (isDarkMode: boolean) => ({
-  control: (base: any) => ({
-    ...base,
-    backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
-    borderColor: isDarkMode ? "#4b5563" : "#d1d5db",
-    color: isDarkMode ? "#ffffff" : "#000000",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: isDarkMode ? "#9ca3af" : "#6b7280",
-    },
-  }),
-  menu: (base: any) => ({
-    ...base,
-    backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
-    color: isDarkMode ? "#ffffff" : "#000000",
-    zIndex: 9999,
-  }),
-  multiValueRemove: (base: any) => ({
-    ...base,
-    color: isDarkMode ? "#f87171" : "#ef4444",
-    "&:hover": {
-      backgroundColor: isDarkMode ? "#f87171" : "#ef4444",
-      color: "#ffffff",
-    },
-  }),
-  option: (base: any, state: any) => ({
-    ...base,
-    backgroundColor: state.isSelected ? (isDarkMode ? "#374151" : "#e5e7eb") : state.isFocused ? (isDarkMode ? "#4b5563" : "#f3f4f6") : isDarkMode ? "#1f2937" : "#ffffff",
-    color: isDarkMode ? "#ffffff" : "#000000",
-  }),
-  singleValue: (base: any) => ({
-    ...base,
-    color: isDarkMode ? "#ffffff" : "#000000",
-  }),
-  menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
-  input: (base: any) => ({
-    ...base,
-    color: isDarkMode ? "#ffffff" : "#000000",
-  }),
-});
-
-const SideBarChat = (props: { idUser?: string | null; currentUser: string; currentMenu: string; onMenuChange: (menu: string) => void; member: any; idConversation: (id: string) => void; receive: (data: any) => void; isUpdated: (data: boolean) => void }) => {
-  const theme = useThemeMode();
+const SideBarChat = (props: SidebarChatProps) => {
   const http = useHttp();
-  const [users, setUsers] = useState<any[]>([]);
   const [openModal, setOpenModal] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
   const [member, setMember] = useState<any[]>([]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [memberByRole, setMemberByRole] = useState<any[]>([]);
+
   const [optionMember, setOptionMember] = useState<any[]>([]);
   const [idsUser, setIdsUser] = useState<any[]>([]);
   const [nameConversation, setNameConversation] = useState<string>("");
-
-  useEffect(() => {
-    setIsDarkMode(document.documentElement.classList.contains("dark"));
-  }, [theme]);
 
   const getMember = async () => {
     try {
@@ -77,9 +45,9 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
     }
   };
 
-  const getUserByRole = async () => {
+  const getUserByRole = async (type: string) => {
     try {
-      const response = await http.get<any>(`/v1/member/list/user?roles=MEMBER`);
+      const response = await http.get<any>(`/v1/member/list/user?roles=${type}`);
       if (response.data) {
         setMemberByRole(response.data);
       }
@@ -91,12 +59,25 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
   const handleCreateGroup = async (e: any) => {
     e.preventDefault();
     try {
+      let idsMember = [];
       setOpenModal(false);
-      const responseCreate = await addConversation({ name: nameConversation, type: "GROUP" });
+      const responseCreate = await addConversation({
+        name: nameConversation,
+        type: props.currentMenu,
+      });
+
+      if (props.currentMenu === "BROADCAST") {
+        const response = await http.get<any>(`/v1/member/list/user?roles=MEMBER`);
+        if (response.data) {
+          idsMember = response.data.map((user: any) => user.Id);
+        }
+      }
+
       if (responseCreate?.data) {
         const dataBulk = {
           idConversation: responseCreate.data.id,
-          idUsers: [...idsUser, props.idUser],
+          idUsers: props.currentMenu === "GROUP" ? [...idsUser, props.idUser] : idsMember,
+          idAdmin: props.currentMenu === "BROADCAST" ? [...idsUser, props.idUser] : [],
         };
         await http.post<any>(`/v1/member/bulk`, dataBulk);
       }
@@ -150,7 +131,11 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
   useEffect(() => {
     if (props.idUser && openModal) {
       getMember();
-      getUserByRole();
+      if (props.currentMenu === "GROUP") {
+        getUserByRole("MEMBER");
+      } else if (props.currentMenu === "BROADCAST") {
+        getUserByRole("ADMIN");
+      }
     }
   }, [openModal, props.idUser]);
 
@@ -171,6 +156,7 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
   return (
     <div className="flex h-full w-full flex-col justify-between rounded-lg bg-gray-200 px-5 py-8 dark:bg-gray-800">
       <div>
+        {/* tabs */}
         <div className="flex justify-between">
           <div onClick={() => props.onMenuChange("PRIVATE")} className={`cursor-pointer rounded-t-md p-3 text-2xl hover:bg-gray-200 dark:hover:bg-gray-800 ${props.currentMenu === "PRIVATE" ? "border-b-2 border-blue-700 text-blue-700" : "text-gray-400 dark:text-gray-700"}`}>
             <IoMdPerson />
@@ -182,6 +168,8 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
             <FaTowerBroadcast />
           </div>
         </div>
+
+        {/* sidebar user list by tabs */}
         <div className="mt-5 w-full flex-col gap-4">
           <div className="flex w-full gap-2">
             <div className="grid w-full cursor-pointer grid-cols-1 items-start gap-3">
@@ -190,7 +178,12 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
                   <Avatar
                     onClick={() => {
                       props.idConversation(user.idConversation ? user.idConversation : user.id);
-                      props.receive({ id: user.id, name: user.name, email: user.email, role: user.role });
+                      props.receive({
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                      });
                     }}
                     className={`cursor-pointer justify-start rounded-md p-2 hover:bg-gray-300 dark:hover:bg-gray-900 ${props.currentUser === user.id ? "bg-gray-300 dark:bg-gray-900" : ""}`}
                     key={index}
@@ -213,6 +206,7 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
         </div>
       </div>
 
+      {/* modal tabs */}
       <div className="flex flex-col items-end justify-end">
         <button onClick={() => setOpenModal(true)} type="button" className="me-2 inline-flex w-fit items-center rounded-full bg-blue-700 p-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
           <FaPlus />
@@ -220,60 +214,7 @@ const SideBarChat = (props: { idUser?: string | null; currentUser: string; curre
         <Modal dismissible show={openModal} onClose={() => setOpenModal(false)} style={{ zIndex: 10 }} className="z-10">
           <form onSubmit={handleCreateGroup}>
             <Modal.Header>{props.currentMenu === "PRIVATE" ? "Kontak" : "Group"}</Modal.Header>
-            <Modal.Body>
-              {props.currentMenu === "GROUP" ? (
-                <div className="grid grid-cols-1 gap-3">
-                  <div>
-                    <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                      Name Group
-                    </label>
-                    <input onChange={(e) => setNameConversation(e.target.value)} type="text" id="name" className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500" placeholder="lorem ipsum" required />
-                  </div>
-                  <div>
-                    <label htmlFor="member" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                      Member
-                    </label>
-                    <Select id="member" menuPortalTarget={document.body} styles={customStyles(isDarkMode)} closeMenuOnSelect={false} components={animatedComponents} isMulti options={optionMember} onChange={(e) => handleChangeSelect(e)} />
-                  </div>
-                  <div></div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {member &&
-                    member.map((user, index) => (
-                      <Avatar
-                        onClick={async () => {
-                          const conv: any = await addConversation({ type: props.currentMenu });
-                          console.log(conv.data);
-                          if (conv.data && props.idUser) {
-                            await addMember(user.id, conv.data.id);
-                            await addMember(props.idUser, conv.data.id);
-                            props.idConversation(conv.data.id);
-                          }
-                          props.receive({ id: user.id, name: user.name, email: user.email, role: user.role });
-                          setOpenModal(false);
-                        }}
-                        className={`cursor-pointer justify-start rounded-md p-2 hover:bg-gray-300 dark:hover:bg-gray-900 ${props.currentUser === user.id ? "bg-gray-300 dark:bg-gray-900" : ""}`}
-                        key={index}
-                        img="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png"
-                        rounded
-                      >
-                        <div className="space-y-1 font-medium dark:text-white">
-                          <div>{user.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">Joined in August 2014</div>
-                        </div>
-                      </Avatar>
-                    ))}
-                </div>
-              )}
-            </Modal.Body>
-            {props.currentMenu === "GROUP" ? (
-              <Modal.Footer>
-                <div className="flex w-full items-center justify-end">
-                  <Button type="submit">Submit</Button>
-                </div>
-              </Modal.Footer>
-            ) : null}
+            {props.currentMenu === "PRIVATE" ? <ModalBodyPrivate member={member} idUser={props.idUser} currentUser={props.currentUser} currentMenu={props.currentMenu} addConversation={addConversation} addMember={addMember} idConversation={props.idConversation} receive={props.receive} setOpenModal={(openModal) => setOpenModal(openModal)} /> : props.currentMenu === "GROUP" ? <ModalBodyGroup isDarkMode={props.isDarkMode} optionMember={optionMember} setNameConversation={(e) => setNameConversation(e)} handleChangeSelect={handleChangeSelect} /> : <ModalBodyBroadcast isDarkMode={props.isDarkMode} optionAdmin={optionMember} setNameConversation={(e) => setNameConversation(e)} handleChangeSelect={handleChangeSelect} />}
           </form>
         </Modal>
       </div>

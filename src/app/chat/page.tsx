@@ -1,31 +1,39 @@
 "use client";
 
-import { Button, TextInput, Avatar } from "flowbite-react";
-import { FormEvent, useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
-import SideBarMenu from "@/components/chat/SidebarMenu";
-import SideBarChat from "@/components/chat/SidebarChat";
-import BubbleChat from "@/components/chat/BubbleChat";
-import { MessageType } from "@/types/global";
 import useHttp from "@/hooks/useHttp";
-import { profileState } from "@/state/profile.state";
 import { useRecoilState } from "recoil";
+import { io, Socket } from "socket.io-client";
+import { Button, TextInput, Avatar, useThemeMode } from "flowbite-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+
+import { Member, Message, MessageDto, MessageType, TabsMenu } from "@/types/global";
+import { profileState } from "@/state/profile.state";
+
+import SideBarChat from "@/components/pages/chat/SidebarChat";
+import BubbleChat from "@/components/pages/chat/BubbleChat";
 
 const SOCKET_SERVER_URL = "http://localhost:4000";
 
 export default function page() {
   const http = useHttp();
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const [chat, setChat] = useState<any[]>([]);
   const [profile, setProfile] = useRecoilState(profileState);
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [currentMenu, setCurrentMenu] = useState<string>("PRIVATE");
-  const [idConversation, setIdConversation] = useState<string>("");
-  const [member, setMember] = useState<any[]>([]);
-  const [receive, setReceive] = useState<any>(null);
-  const [isUpdate, setIsUpdate] = useState<boolean>(false);
 
-  const [formChat, setFormChat] = useState({
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [chat, setChat] = useState<Message[]>([]);
+  const [member, setMember] = useState<Member[]>([]);
+  const [receive, setReceive] = useState<Member | undefined>();
+  const [memberBroadcast, setmemberBroadcast] = useState<Member[] | undefined>();
+  const [isAllowMemberBroadcast, setAllowMemberBroadcast] = useState<boolean>(false);
+  const [isUpdate, setIsUpdate] = useState<boolean>(false);
+  const [idConversation, setIdConversation] = useState<string>("");
+
+  const [currentMenu, setCurrentMenu] = useState<TabsMenu>("PRIVATE");
+
+  const theme = useThemeMode();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const [formChat, setFormChat] = useState<MessageDto>({
     message: "",
     attachment: "",
     idConversation: "",
@@ -61,6 +69,44 @@ export default function page() {
     }
   };
 
+  const getMemberBroadcast = async () => {
+    try {
+      const response = await http.get<any>(`/v1/member/conversation/${idConversation}`);
+      if (response.data) {
+        setmemberBroadcast(response.data.member);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleSendMessagaeSocket = (idProfile: string) => {
+    const newSocket = io(SOCKET_SERVER_URL);
+
+    newSocket.on("connect", () => {
+      newSocket.emit("registerUser", idProfile);
+    });
+
+    newSocket.on("message", (newMessage) => {
+      const newChat = {
+        id: newMessage.Id,
+        message: newMessage.Message,
+        attachment: newMessage.Attachment,
+        member: {
+          id: newMessage.member.id,
+          email: newMessage.member.email,
+          name: newMessage.member.name,
+          role: newMessage.member.role,
+        },
+      };
+      if (receive) {
+        setChat((prev: Message[]) => [...prev, newChat]);
+      }
+    });
+
+    setSocket(newSocket);
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -70,6 +116,7 @@ export default function page() {
       attachment: "[]",
       idConversation: idConversation,
     };
+
     socket?.emit("message", payload);
     setFormChat((prev) => ({
       ...prev,
@@ -80,6 +127,10 @@ export default function page() {
   useEffect(() => {
     getProfile();
   }, []);
+
+  useEffect(() => {
+    setIsDarkMode(document.documentElement.classList.contains("dark"));
+  }, [theme]);
 
   useEffect(() => {
     if (idConversation) {
@@ -110,45 +161,36 @@ export default function page() {
         idUser: profile.id ?? "",
       }));
 
-      const newSocket = io(SOCKET_SERVER_URL);
-
-      newSocket.on("connect", () => {
-        newSocket.emit("registerUser", profile.id);
-      });
-
-      newSocket.on("message", (newMessage) => {
-        console.log(newMessage);
-        console.log(profile);
-        const newChat = {
-          id: newMessage.Id,
-          message: newMessage.Message,
-          attachment: newMessage.Attachment,
-          member: {
-            id: newMessage.member.id,
-            email: newMessage.member.email,
-            name: newMessage.member.name,
-            role: newMessage.member.role,
-          },
-        };
-        if (receive) {
-          setChat((prev) => [...prev, newChat]);
-        }
-      });
-
-      setSocket(newSocket);
+      handleSendMessagaeSocket(profile.id);
     }
   }, [profile, receive]);
 
+  useEffect(() => {
+    console.log("tes");
+    console.log(idConversation);
+    if (idConversation && currentMenu === "BROADCAST") {
+      getMemberBroadcast();
+    }
+  }, [currentMenu, idConversation]);
+
+  useEffect(() => {
+    if (memberBroadcast) {
+      const isAllowedUser = memberBroadcast.find((user: Member) => user.id === profile?.id);
+      if (isAllowedUser && isAllowedUser.isAllowed !== undefined) {
+        console.log(isAllowedUser.isAllowed);
+        setAllowMemberBroadcast(isAllowedUser.isAllowed);
+      }
+    }
+  }, [memberBroadcast]);
+
   return (
     <div className="flex h-screen max-h-screen items-center justify-center pl-4">
-      {/* <div className="hidden h-screen w-2/12 border border-solid border-black md:flex">
-        <SideBarMenu />
-      </div> */}
       <div className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-4">
         <div className="hidden h-full md:flex">
-          <SideBarChat isUpdated={(e) => setIsUpdate(e)} idUser={profile && profile.id} currentUser={receive && receive.id} receive={(data) => setReceive(data)} idConversation={(id) => setIdConversation(id)} onMenuChange={(menu) => setCurrentMenu(menu)} currentMenu={currentMenu} member={member && member} />
+          <SideBarChat isDarkMode={isDarkMode} isUpdated={(e) => setIsUpdate(e)} idUser={profile && profile.id} currentUser={receive && receive.id} receive={(data) => setReceive(data)} idConversation={(id) => setIdConversation(id)} onMenuChange={(menu: TabsMenu) => setCurrentMenu(menu)} currentMenu={currentMenu} member={member && member} />
         </div>
         <div className="container col-span-3 flex flex-col">
+          {/* head chat */}
           {receive ? (
             <div className="flex p-2">
               <Avatar img="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" rounded>
@@ -159,14 +201,18 @@ export default function page() {
               </Avatar>
             </div>
           ) : null}
+
+          {/* chat body */}
           <div ref={chatContainerRef} className="scrollbar flex max-h-[75vh] min-h-[75vh] w-full grow flex-col gap-4 overflow-auto">
             {chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.id === profile?.id ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}
           </div>
+
+          {/* submit chat */}
           <form onSubmit={onSubmit} className="mt-auto flex flex-col gap-2">
             <p>{profile && profile.name} </p>
             <div className="flex gap-2">
               <TextInput value={formChat.message} name="message" className="w-full" onChange={(e) => setFormChat((prev) => ({ ...prev, message: e.target.value }))} />
-              <Button disabled={receive ? false : true} color="blue" type="submit">
+              <Button disabled={receive ? !isAllowMemberBroadcast : true} color="blue" type="submit">
                 Send
               </Button>
             </div>

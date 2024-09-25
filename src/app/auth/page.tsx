@@ -1,12 +1,14 @@
 "use client";
 
-import useHttp from "@/hooks/useHttp";
-import { ProfileDto } from "@/types/global";
-import { getAuth } from "@/utils/get-auth";
-import { Button, Card, Label, TextInput } from "flowbite-react";
-import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+import useHttp from "@/hooks/useHttp";
+import { getAuth } from "@/utils/get-auth";
 import { setAuth } from "@/utils/set-auth";
+import { ProfileDto } from "@/types/global";
+
+import { Button, Card, Label, TextInput } from "flowbite-react";
 
 export default function page() {
   const router = useRouter();
@@ -19,7 +21,11 @@ export default function page() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const response = await http.post<{ name: string; email: string; role: string }>("/v1/auth/sign-in", form);
+      const response = await http.post<{
+        name: string;
+        email: string;
+        role: string;
+      }>("/v1/auth/sign-in", form);
       const user = {
         name: response.data.name,
         email: response.data.email,
@@ -39,19 +45,6 @@ export default function page() {
   useEffect(() => {
     if (getAuth()) router.push("/chat");
   }, []);
-
-  // const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   const formData = new FormData(event.currentTarget);
-  //   const username = formData.get("username");
-  //   const fullName = formData.get("fullName");
-  //   const user = {
-  //     username: username as string,
-  //     fullName: fullName as string,
-  //   };
-  //   setAuth(user);
-  //   router.push("/chat");
-  // };
 
   return (
     <div className="container py-12">
