@@ -87,7 +87,7 @@ export default function page() {
       newSocket.emit("registerUser", idProfile);
     });
 
-    newSocket.on("message", (newMessage) => {
+    newSocket.on("message", async (newMessage) => {
       const newChat = {
         id: newMessage.Id,
         message: newMessage.Message,
@@ -102,6 +102,8 @@ export default function page() {
       if (receive) {
         setChat((prev: Message[]) => [...prev, newChat]);
       }
+
+      await getMember();
     });
 
     setSocket(newSocket);
@@ -166,8 +168,6 @@ export default function page() {
   }, [profile, receive]);
 
   useEffect(() => {
-    console.log("tes");
-    console.log(idConversation);
     if (idConversation && currentMenu === "BROADCAST") {
       getMemberBroadcast();
     }
@@ -212,7 +212,7 @@ export default function page() {
             <p>{profile && profile.name} </p>
             <div className="flex gap-2">
               <TextInput value={formChat.message} name="message" className="w-full" onChange={(e) => setFormChat((prev) => ({ ...prev, message: e.target.value }))} />
-              <Button disabled={receive ? !isAllowMemberBroadcast : true} color="blue" type="submit">
+              <Button disabled={receive ? currentMenu === "BROADCAST" && !isAllowMemberBroadcast : true} color="blue" type="submit">
                 Send
               </Button>
             </div>
