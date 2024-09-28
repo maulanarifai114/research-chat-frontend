@@ -58,6 +58,9 @@ const SideBarChat = (props: SidebarChatProps) => {
 
   const handleCreateGroup = async (e: any) => {
     e.preventDefault();
+    if (props.currentMenu === "PRIVATE") {
+      return;
+    }
     try {
       let idsMember = [];
       setOpenModal(false);
@@ -212,7 +215,7 @@ const SideBarChat = (props: SidebarChatProps) => {
           <FaPlus />
         </button>
         <Modal dismissible show={openModal} onClose={() => setOpenModal(false)} style={{ zIndex: 10 }} className="z-10">
-          <form onSubmit={handleCreateGroup}>
+          <form onSubmit={props.currentMenu !== "PRIVATE" ? handleCreateGroup : undefined}>
             <Modal.Header>{props.currentMenu === "PRIVATE" ? "Kontak" : "Group"}</Modal.Header>
             {props.currentMenu === "PRIVATE" ? <ModalBodyPrivate member={member} idUser={props.idUser} currentUser={props.currentUser} currentMenu={props.currentMenu} addConversation={addConversation} addMember={addMember} idConversation={props.idConversation} receive={props.receive} setOpenModal={(openModal) => setOpenModal(openModal)} /> : props.currentMenu === "GROUP" ? <ModalBodyGroup isDarkMode={props.isDarkMode} optionMember={optionMember} setNameConversation={(e) => setNameConversation(e)} handleChangeSelect={handleChangeSelect} /> : <ModalBodyBroadcast isDarkMode={props.isDarkMode} optionAdmin={optionMember} setNameConversation={(e) => setNameConversation(e)} handleChangeSelect={handleChangeSelect} />}
           </form>

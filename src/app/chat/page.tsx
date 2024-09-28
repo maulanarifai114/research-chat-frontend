@@ -12,6 +12,8 @@ import { profileState } from "@/state/profile.state";
 import SideBarChat from "@/components/pages/chat/SidebarChat";
 import BubbleChat from "@/components/pages/chat/BubbleChat";
 
+import AttachmentIcon from "@mui/icons-material/Attachment";
+
 const SOCKET_SERVER_URL = "http://localhost:4000";
 
 export default function page() {
@@ -33,6 +35,7 @@ export default function page() {
   const theme = useThemeMode();
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [formChat, setFormChat] = useState<MessageDto>({
     message: "",
     attachment: "",
@@ -80,6 +83,16 @@ export default function page() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormChat((prev) => ({
+        ...prev,
+        attachment: file.name,
+      }));
+    }
+  };
+
   const handleSendMessagaeSocket = (idProfile: string) => {
     const newSocket = io(SOCKET_SERVER_URL);
 
@@ -115,7 +128,7 @@ export default function page() {
     const payload = {
       sender: profile?.id,
       message: formChat.message,
-      attachment: "[]",
+      attachment: formChat.attachment,
       idConversation: idConversation,
     };
 
@@ -177,7 +190,6 @@ export default function page() {
     if (memberBroadcast) {
       const isAllowedUser = memberBroadcast.find((user: Member) => user.id === profile?.id);
       if (isAllowedUser && isAllowedUser.isAllowed !== undefined) {
-        console.log(isAllowedUser.isAllowed);
         setAllowMemberBroadcast(isAllowedUser.isAllowed);
       }
     }
@@ -204,7 +216,7 @@ export default function page() {
 
           {/* chat body */}
           <div ref={chatContainerRef} className="scrollbar flex max-h-[75vh] min-h-[75vh] w-full grow flex-col gap-4 overflow-auto">
-            {chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} message={item.message} type={item.member.id === profile?.id ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}
+            {chat && chat.length > 0 ? chat.map((item: any, index) => <BubbleChat userName={item.member.name} attachment={item.attachment} message={item.message} type={item.member.id === profile?.id ? MessageType.SENDER : MessageType.RECEIVER} key={index} />) : <div className="flex h-[70vh] items-center justify-center text-gray-500 dark:text-gray-400">Add a chat now</div>}
           </div>
 
           {/* submit chat */}
@@ -212,11 +224,18 @@ export default function page() {
             <p>{profile && profile.name} </p>
             <div className="flex gap-2">
               <TextInput value={formChat.message} name="message" className="w-full" onChange={(e) => setFormChat((prev) => ({ ...prev, message: e.target.value }))} />
+              <div className="relative">
+                <button type="button" onClick={() => fileInputRef.current?.click()}>
+                  <AttachmentIcon className="text-xl" />
+                </button>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,video/*" />
+              </div>
               <Button disabled={receive ? currentMenu === "BROADCAST" && !isAllowMemberBroadcast : true} color="blue" type="submit">
                 Send
               </Button>
             </div>
           </form>
+          {formChat.attachment && <p>Attachment: {formChat.attachment}</p>}
         </div>
       </div>
     </div>
