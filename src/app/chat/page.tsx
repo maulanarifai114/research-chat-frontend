@@ -63,7 +63,7 @@ export default function page() {
 
   const getMember = async () => {
     try {
-      const response = await http.get<any>(`/v1/member/user/${profile?.id}`);
+      const response = await http.get<any>(`/v1/member/new/${profile?.id}`);
       if (response.data) {
         setMember(response.data);
       }
